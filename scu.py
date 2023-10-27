@@ -149,7 +149,8 @@ def txt_err(Value:float, Error:float, Separate_uncerainty:bool=False, Figures:in
             return ('{:.' +str(-cut_point) +'f}({:.0f})').format(Value, Error *pow(10, -cut_point))
         
 # ====================================================================================================
-        
+
+''' Physical qunatity configuration: '''   
 QUANTITIES = {'Time':           ['s',       False],
               'Frequency':      ['Hz',      True],
               'Length':         ['m',       True],
@@ -188,17 +189,19 @@ QUANTITIES = {'Time':           ['s',       False],
               'DoseAbs':        ['Gy',      True],
               'DoseEq':         ['Sv',      True]}
 
+''' SI unit prefixes: ''' 
 PREFIXES = ['q','r','y','z','a','f','p','n','μ','m','','k','M','G','T','P','E','Z','Y','R','Q']
 
-SPECIAL = {'Time':('s', (('as',1/1000),('fs',1/1000),('ps',1/1000),('ns',1/1000), ('μs',1/1000), ('ms',1/1000), ('s', 1), ('min',60), ('h',60), ('d',24), ('y',365), ('ky',1000), ('My',1000), ('Gy',1000), ('Ty',1000))),
-           'Area':('m²', (('am³',pow(1000, -3)), ('fm²',pow(1000, -2)), ('pm²',pow(1000, -2)), ('nm²',pow(1000, -2)), ('μm²',pow(1000, -2)), ('mm²',pow(1000, -2)), ('m²', 1), ('km²',pow(1000, 2)), ('Mm²',pow(1000, 2)), ('Gm²',pow(1000, 2)), ('Tm²',pow(1000, 2)))),
-           'Volume':('m²', (('am³',pow(1000, -3)), ('fm³',pow(1000, -3)), ('pm³',pow(1000, -3)), ('nm³',pow(1000, -3)), ('μm³',pow(1000, -3)), ('mm³',pow(1000, -3)), ('m³', 1), ('km³',pow(1000, 3)), ('Mm³',pow(1000, 3)), ('Gm³',pow(1000, 3)), ('Tm³',pow(1000, 3)))),
-           'Angle':('rad', (('rad', 1),)),
-           'AngleSolid':('sr', (('sr', 1),)),
-           'Mass':('kg', (('ag', 1/1000), ('fg', 1/1000), ('pg', 1/1000), ('ng', 1/1000), ('μg', 1/1000), ('mg', 1/1000), ('g', 1/1000), ('kg', 1), ('T', 1000), ('kT', 1000), ('MT', 1000), ('GT', 1000), ('TT', 1000))),
-           'Density':('kg/m³', (('ag', 1/1000), ('fg', 1/1000), ('pg', 1/1000), ('ng', 1/1000), ('μg', 1/1000), ('mg', 1/1000), ('g/cm³', 1/1000), ('kg/m³', 1), ('T/m³', 1000), ('kT', 1000), ('MT', 1000), ('GT', 1000), ('TT', 1000))),
-           'Density':('kg/cm³', (('ag/cm³', 1/1000), ('fg/cm³', 1/1000), ('pg/cm³', 1/1000), ('ng/cm³', 1/1000), ('μg/cm³', 1/1000), ('mg/cm³', 1/1000), ('g/cm³', 1/1000), ('kg/cm³', 1), ('T/cm³', 1000), ('kT/cm³', 1000), ('MT/cm³', 1000), ('GT/cm³', 1000), ('TT/cm³', 1000))),
-           'Density_Liter':('kg/m³', (('ag/L', 1/1000), ('fg/L', 1/1000), ('pg/L', 1/1000), ('ng/L', 1/1000), ('μg/L', 1/1000), ('mg/L', 1/1000), ('g/cm³', 1/1000), ('kg/L', 1), ('T/L', 1000), ('kT/L', 1000), ('MT/L', 1000), ('GT/L', 1000), ('TT/L', 1000)))}
+''' Special unit configuration: ''' 
+UNITS_SPECIAL = {'Time':('s', (('as',1/1000),('fs',1/1000),('ps',1/1000),('ns',1/1000), ('μs',1/1000), ('ms',1/1000), ('s', 1), ('min',60), ('h',60), ('d',24), ('y',365), ('ky',1000), ('My',1000), ('Gy',1000), ('Ty',1000))),
+                'Area':('m²', (('am³',pow(1000, -3)), ('fm²',pow(1000, -2)), ('pm²',pow(1000, -2)), ('nm²',pow(1000, -2)), ('μm²',pow(1000, -2)), ('mm²',pow(1000, -2)), ('m²', 1), ('km²',pow(1000, 2)), ('Mm²',pow(1000, 2)), ('Gm²',pow(1000, 2)), ('Tm²',pow(1000, 2)))),
+                'Volume':('m²', (('am³',pow(1000, -3)), ('fm³',pow(1000, -3)), ('pm³',pow(1000, -3)), ('nm³',pow(1000, -3)), ('μm³',pow(1000, -3)), ('mm³',pow(1000, -3)), ('m³', 1), ('km³',pow(1000, 3)), ('Mm³',pow(1000, 3)), ('Gm³',pow(1000, 3)), ('Tm³',pow(1000, 3)))),
+                'Angle':('rad', (('rad', 1),)),
+                'AngleSolid':('sr', (('sr', 1),)),
+                'Mass':('kg', (('ag', 1/1000), ('fg', 1/1000), ('pg', 1/1000), ('ng', 1/1000), ('μg', 1/1000), ('mg', 1/1000), ('g', 1/1000), ('kg', 1), ('T', 1000), ('kT', 1000), ('MT', 1000), ('GT', 1000), ('TT', 1000))),
+                'Density':('kg/m³', (('ag', 1/1000), ('fg', 1/1000), ('pg', 1/1000), ('ng', 1/1000), ('μg', 1/1000), ('mg', 1/1000), ('g/cm³', 1/1000), ('kg/m³', 1), ('T/m³', 1000), ('kT', 1000), ('MT', 1000), ('GT', 1000), ('TT', 1000))),
+                'Density':('kg/cm³', (('ag/cm³', 1/1000), ('fg/cm³', 1/1000), ('pg/cm³', 1/1000), ('ng/cm³', 1/1000), ('μg/cm³', 1/1000), ('mg/cm³', 1/1000), ('g/cm³', 1/1000), ('kg/cm³', 1), ('T/cm³', 1000), ('kT/cm³', 1000), ('MT/cm³', 1000), ('GT/cm³', 1000), ('TT/cm³', 1000))),
+                'Density_Liter':('kg/m³', (('ag/L', 1/1000), ('fg/L', 1/1000), ('pg/L', 1/1000), ('ng/L', 1/1000), ('μg/L', 1/1000), ('mg/L', 1/1000), ('g/cm³', 1/1000), ('kg/L', 1), ('T/L', 1000), ('kT/L', 1000), ('MT/L', 1000), ('GT/L', 1000), ('TT/L', 1000)))}
 
 def sign(x:float):
     ''' Function that returns the sign of x.'''
@@ -241,16 +244,16 @@ def txt_unit(Value:float, Error:float=None, Unit:str=None, Quantity:str=None, Se
             valuepack = best[1]
             unitpack = PREFIXES[best[0]]+QUANTITIES[Quantity][0]
         else:
-            ref_i = SPECIAL[Quantity][1].index((SPECIAL[Quantity][0], 1))
+            ref_i = UNITS_SPECIAL[Quantity][1].index((UNITS_SPECIAL[Quantity][0], 1))
             options = []
-            for i in range(len(SPECIAL[Quantity][1])):
+            for i in range(len(UNITS_SPECIAL[Quantity][1])):
                 test = Value
                 test_error = Error
                 if not i == ref_i:
                     for j in [x for x in range(ref_i, i+sign(i-ref_i), sign(i-ref_i))][1:]:
-                        test = test / SPECIAL[Quantity][1][j][1]
+                        test = test / UNITS_SPECIAL[Quantity][1][j][1]
                         if not Error is None:
-                            test_error = test_error / SPECIAL[Quantity][1][j][1]
+                            test_error = test_error / UNITS_SPECIAL[Quantity][1][j][1]
                 if not Error is None:
                     options.append((i, txt_err(test, Error=test_error, Figures=Figures_Error)))
                 else:
@@ -258,7 +261,7 @@ def txt_unit(Value:float, Error:float=None, Unit:str=None, Quantity:str=None, Se
                     options.append((i, ('{:.'+str(max(0,-cut_point))+'f}').format(test)))
             best = tuple(x for x in options if len(x[1].replace('.','')) == min(len(x[1].replace('.','')) for x in options))[-1]
             valuepack = best[1]
-            unitpack = SPECIAL[Quantity][1][best[0]][0]
+            unitpack = UNITS_SPECIAL[Quantity][1][best[0]][0]
     return valuepack + Separator + unitpack
 
 # ====================================================================================================
