@@ -1,0 +1,25 @@
+# meta management
+    -> argv()
+        program argument management
+    -> imports()
+        multiple imports
+    -> pack_manage()
+        auto import / install of one package
+    -> pack_install()
+        installing of one package
+# text
+    -> txt_c()
+        colored Text
+    -> printc()
+        colored print command
+    -> printf()
+        colored line overwrite printing
+    -> printm()
+        colored multiline overwrite printing
+    -> txt_t()
+        remainign time + percentage
+# scientific utilities
+    -> txt_err()
+        scientific error formatting
+    -> chi_squared_test()
+        implementation of a chi squared test

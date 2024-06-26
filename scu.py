@@ -4,35 +4,40 @@ import math
 import time
 import importlib
 import subprocess
+import json
+import zlib
 
-'''
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-====================================================================================================
-   _____  _____ _    _             __ _  _   
-  / ____|/ ____| |  | |       /\  /_ | || |  
- | (___ | |    | |  | |_   __/  \  | | || |_ 
-  \___ \| |    | |  | \ \ / / /\ \ | |__   _|
-  ____) | |____| |__| |\ V / ____ \| |_ | |  
- |_____/ \_____|\____/  \_/_/    \_\_(_)|_|  
-                                             
-====================================================================================================
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-https://patorjk.com/software/taag/#p=display&f=Big
-'''
-
-SCU_VERSION = 'A1.4'
-SCU_VERSION_FULL = 'A1.4.2023-10-27'
+SCU_VERSION = 'A1.8'
+SCU_VERSION_FULL = 'A1.8.2024-06-26'
+# Updated the argmanage function
+# Added compression filestorage methods
 
 # ====================================================================================================
 
 def argv():
-    ''' Function to output command line arguments given to the program, separated between {normal} and {-} arguments. '''
-    args = sys.argv[1:]
-    return [arg for arg in args if not arg[:1] == '-'], {arg[1:] for arg in args if arg[:1] == '-'}
+    ''' Function to output command line arguments given to the program, separated between {normal} and {keyed (-)} arguments. '''
+    argv = sys.argv[1:]
+    args, kwargs, flag = [], {}, 0
+    for key in argv:
+        if key[0] == '-':
+            if flag == 0:
+                flag = 1
+            if key[0] == '-' and flag == 1:
+                flag = 2
+                pack_key, pack_vals = key[1:], []
+            if key[0] == '-' and flag == 2:
+                flag = 1
+                kwargs.update({pack_key: pack_vals})
+        else:
+            if flag == 0:
+                args.append(key)
+            else:
+                pack_vals.append(key)
+    return args, kwargs
 
-def imports(*Args):
+def imports(*args):
     ''' Function to automatically import a number of packages. '''
-    for arg in Args:
+    for arg in args:
         if isinstance(arg, str):
             pack_manage(arg)
         else:
@@ -67,206 +72,93 @@ def pack_install(package:str):
 
 ''' ANSI escape sequence foreground colors: '''
 COLORS_FG = {   None:';37',
-                'White':';37', 'Red':';31', 'Green':';32', 'Blue':';34', 'Cyan':';36', 'Yellow':';33', 'Magenta':';35', 'Black':';30', 'Grey':';90',
-                'W':';37', 'R':';31', 'G':';32', 'B':';34', 'C':';36', 'Y':';33', 'M':';35', 'K':';30',
-                'Wb':';97', 'Rb':';91', 'Gb':';92', 'Bb':';94', 'Cb':';96', 'Yb':';93', 'Mb':';95', 'Kb':';90',
-                'Orange':';38;5;208', 'O':';38;5;208'}
+                'white':';37', 'red':';31', 'green':';32', 'blue':';34', 'cyan':';36', 'yellow':';33', 'magenta':';35', 'black':';30', 'grey':';90',
+                'w':';37', 'r':';31', 'g':';32', 'b':';34', 'c':';36', 'y':';33', 'm':';35', 'k':';30',
+                'wb':';97', 'rb':';91', 'gb':';92', 'bb':';94', 'cb':';96', 'yb':';93', 'mb':';95', 'kb':';90',
+                'orange':';38;5;208', 'o':';38;5;208'}
 
 ''' ANSI escape sequence background colors: '''
 COLORS_BG = {   None:'',
-                'White':';47', 'Red':';41', 'Green':';42', 'Blue':';44', 'Cyan':';46', 'Yellow':';43', 'Magenta':';45', 'Black':';40', 'Grey':';100',
-                'W':';47', 'R':';41', 'G':';42', 'B':';44', 'C':';46', 'Y':';43', 'M':',45', 'K':';40',
-                'Wb':';107', 'Rb':';101', 'Gb':';102', ';Bb':';104', 'Cb':';106', 'Yb':';103', 'Mb':';105', 'Kb':';100',
-                'Orange':';48;5;208', 'O':';48;5;208'}
+                'white':';47', 'red':';41', 'green':';42', 'blue':';44', 'cyan':';46', 'yellow':';43', 'magenta':';45', 'black':';40', 'grey':';100',
+                'w':';47', 'r':';41', 'g':';42', 'b':';44', 'c':';46', 'y':';43', 'm':',45', 'k':';40',
+                'wb':';107', 'rb':';101', 'gb':';102', ';bb':';104', 'cb':';106', 'yb':';103', 'mb':';105', 'kb':';100',
+                'orange':';48;5;208', 'o':';48;5;208'}
 
 ''' ANSI escape sequence text styles: '''
-STYLES = {None:'0', 'B':'1', 'U':'2'}
+STYLES = {None:'0', 'b':'1', 'u':'2'}
 
-def txt_c(*Args, Color:str=None, C:str=None, Color_background:str=None, Style:str=None):
+def _lower_none(key:None|str):
+    ''' Function that returns a lowered string or None, depending on the input. '''
+    if key is None: return key
+    else: return key.lower()
+
+def txt_c(*args, color:str=None, c:str=None, color_background:str=None, style:str=None):
     ''' Function to return a colored version of the text args submitted. '''
-    if Color is None:
-        Color = C
-    sequence = '\033[' +STYLES[Style] +COLORS_FG[Color] +COLORS_BG[Color_background] +'m'
-    return sequence +' '.join([str(x) for x in Args])+'\033[0m'
+    if color is None:
+        color = c
+    sequence = '\033[' +STYLES[_lower_none(style)] +COLORS_FG[_lower_none(color)] +COLORS_BG[_lower_none(color_background)] +'m'
+    return sequence +' '.join([str(x) for x in args])+'\033[0m'
 
 # ====================================================================================================
 
-def printc(*Args, Color:str=None, C:str=None, Color_background:str=None, Style:str=None):
+def printc(*args, color:str=None, c:str=None, color_background:str=None, style:str=None):
     ''' Function to print a colored version of the args submitted. '''
-    if Color is None:
-        Color = C
-    print(txt_c(*Args, Color=Color, Color_background=Color_background, Style=Style))
+    if color is None:
+        color = c
+    print(txt_c(*args, color=color, color_background=color_background, style=style))
     return None
 
-def printf(*Args, Final:bool=False, Color:str=None, C:str=None, Color_background:str=None, Style:str=None, Width:int=None):
+def printf(*args, final:bool=False, color:str=None, c:str=None, color_background:str=None, style:str=None, width:int=None):
     ''' Function to overwrite the current line with a colored version of the args submitted. '''
-    if Color is None:
-        Color = C
-    if Width is None:
-        Width = os.get_terminal_size()[0]
-    sys.stdout.write('\r'+' '*Width +'\r' +txt_c(*Args, Color=Color, Color_background=Color_background, Style=Style))
-    if Final:
+    if color is None:
+        color = c
+    if width is None:
+        width = os.get_terminal_size()[0]
+    sys.stdout.write('\r'+' '*width +'\r' +txt_c(*args, color=color, color_background=color_background, style=style))
+    if final:
         sys.stdout.write('\n')
     return None
 
-def printm(List, Final:bool=False, Width:int=None):
+def printm(iterable, final:bool=False, width:int=None):
     ''' Function to overwrite multiple lines with the args taken from the list submitted. '''
-    if Width is None:
-        Width = os.get_terminal_size()[0]
-    if not(isinstance(List, list) or isinstance(List, tuple)):
+    if width is None:
+        width = os.get_terminal_size()[0]
+    if not(isinstance(iterable, list) or isinstance(iterable, tuple)):
         raise TypeError('The first argument has to be a list or a tuple')
-    sys.stdout.write('\033[' +str(len(List))+'F')
-    for line in List:
+    sys.stdout.write('\033[' +str(len(iterable))+'F')
+    for line in iterable:
         if isinstance(line, list) or isinstance(line, tuple):
             line = ' '.join([str(x) for x in line])
-        sys.stdout.write(' '*Width +'\r' +line +'\033[1E')
-    if Final:
+        sys.stdout.write(' '*width +'\r' +line +'\033[1E')
+    if final:
         sys.stdout.write('\n')
     return None
 
 # ====================================================================================================
 
-def txt_t(i:int, Max:int, Timestamp:float):
+def txt_t(i:int, max:int, timestamp:float):
     ''' Function to create a percentage and remaining time string. '''
-    per = (i+1)/Max
-    rem = (time.perf_counter() - Timestamp) / per * (1-per)
+    per = (i+1)/max
+    rem = (time.perf_counter() - timestamp) / per * (1-per)
     return '{:.2f}% {:.0f}s'.format(per*100, rem)
 
 # ====================================================================================================
 
-def txt_err(Value:float, Error:float, Separate_uncerainty:bool=False, Figures:int=2):
+def txt_err(value:float, error:float, sperate_uncertainty:bool=False, figures:int=2):
     ''' Function to format a value and error. '''
-    cut_point = math.floor(math.log10(Error)) +1 -Figures
+    cut_point = math.floor(math.log10(error)) +1 -figures
     if cut_point >= 0:
-        if Separate_uncerainty:
-            return '{:.0f} ± {:.0f}'.format(Value, Error)
+        if sperate_uncertainty:
+            return '{:.0f} ± {:.0f}'.format(value, error)
         else:
-            return '{:.0f}({:.0f})'.format(Value, Error)
+            return '{:.0f}({:.0f})'.format(value, error)
     else:
-        if Separate_uncerainty:
-            return ('{:.' +str(-cut_point) +'f} ± {:.' +str(-cut_point) +'f}').format(Value, Error)
+        if sperate_uncertainty:
+            return ('{:.' +str(-cut_point) +'f} ± {:.' +str(-cut_point) +'f}').format(value, error)
         else:
-            return ('{:.' +str(-cut_point) +'f}({:.0f})').format(Value, Error *pow(10, -cut_point))
-        
-# ====================================================================================================
+            return ('{:.' +str(-cut_point) +'f}({:.0f})').format(value, error *pow(10, -cut_point))
 
-''' Physical qunatity configuration: '''   
-QUANTITIES = {'Time':           ['s',       False],
-              'Frequency':      ['Hz',      True],
-              'Length':         ['m',       True],
-              'Area':           ['m²',      False],
-              'Volume':         ['m³',      False],
-              'Volume_L':       ['L',       True],
-              'Velocity':       ['m/s',     True],
-              'Acceleration':   ['m/s²',    True],
-              'Jerk':           ['m/s³',    True],
-              'Angle':          ['rad',     False],
-              'AngleSolid':     ['sr',      False],
-              'Angle_degree':   ['°',       False],
-              'Mass':           ['kg',      False],
-              'Density':        ['kg/m³',   False],
-              'Density_cm':     ['kg/cm³',  False],
-              'Density_L':      ['kg/L',    False],
-              'Current':        ['A',       True],
-              'Temperature':    ['K',       True],
-              'Amount':         ['mol',     True],
-              'Voltage':        ['V',       True],
-              'Force':          ['N',       True],
-              'Pressure':       ['Pa',      True],
-              'Pressure_Bar':   ['Bar',     True],
-              'Energy':         ['J',       True],
-              'Energy_eV':      ['eV',      True],
-              'Power':          ['W',       True],
-              'Capacitance':    ['F',       True],
-              'Resistance':     ['Ω',       True],
-              'Conductance':    ['S',       True],
-              'MagFlux':        ['Wb',      True],
-              'MagFluxDensity': ['T',       True],
-              'Inductance':     ['H',       True],
-              'LumFlux':        ['lm',      True],
-              'Illuminance':    ['lx',      True],
-              'Activity':       ['Bq',      True],
-              'DoseAbs':        ['Gy',      True],
-              'DoseEq':         ['Sv',      True]}
-
-''' SI unit prefixes: ''' 
-PREFIXES = ['q','r','y','z','a','f','p','n','μ','m','','k','M','G','T','P','E','Z','Y','R','Q']
-
-''' Special unit configuration: ''' 
-UNITS_SPECIAL = {'Time':('s', (('as',1/1000),('fs',1/1000),('ps',1/1000),('ns',1/1000), ('μs',1/1000), ('ms',1/1000), ('s', 1), ('min',60), ('h',60), ('d',24), ('y',365), ('ky',1000), ('My',1000), ('Gy',1000), ('Ty',1000))),
-                'Area':('m²', (('am³',pow(1000, -3)), ('fm²',pow(1000, -2)), ('pm²',pow(1000, -2)), ('nm²',pow(1000, -2)), ('μm²',pow(1000, -2)), ('mm²',pow(1000, -2)), ('m²', 1), ('km²',pow(1000, 2)), ('Mm²',pow(1000, 2)), ('Gm²',pow(1000, 2)), ('Tm²',pow(1000, 2)))),
-                'Volume':('m²', (('am³',pow(1000, -3)), ('fm³',pow(1000, -3)), ('pm³',pow(1000, -3)), ('nm³',pow(1000, -3)), ('μm³',pow(1000, -3)), ('mm³',pow(1000, -3)), ('m³', 1), ('km³',pow(1000, 3)), ('Mm³',pow(1000, 3)), ('Gm³',pow(1000, 3)), ('Tm³',pow(1000, 3)))),
-                'Angle':('rad', (('rad', 1),)),
-                'AngleSolid':('sr', (('sr', 1),)),
-                'Mass':('kg', (('ag', 1/1000), ('fg', 1/1000), ('pg', 1/1000), ('ng', 1/1000), ('μg', 1/1000), ('mg', 1/1000), ('g', 1/1000), ('kg', 1), ('T', 1000), ('kT', 1000), ('MT', 1000), ('GT', 1000), ('TT', 1000))),
-                'Density':('kg/m³', (('ag', 1/1000), ('fg', 1/1000), ('pg', 1/1000), ('ng', 1/1000), ('μg', 1/1000), ('mg', 1/1000), ('g/cm³', 1/1000), ('kg/m³', 1), ('T/m³', 1000), ('kT', 1000), ('MT', 1000), ('GT', 1000), ('TT', 1000))),
-                'Density':('kg/cm³', (('ag/cm³', 1/1000), ('fg/cm³', 1/1000), ('pg/cm³', 1/1000), ('ng/cm³', 1/1000), ('μg/cm³', 1/1000), ('mg/cm³', 1/1000), ('g/cm³', 1/1000), ('kg/cm³', 1), ('T/cm³', 1000), ('kT/cm³', 1000), ('MT/cm³', 1000), ('GT/cm³', 1000), ('TT/cm³', 1000))),
-                'Density_Liter':('kg/m³', (('ag/L', 1/1000), ('fg/L', 1/1000), ('pg/L', 1/1000), ('ng/L', 1/1000), ('μg/L', 1/1000), ('mg/L', 1/1000), ('g/cm³', 1/1000), ('kg/L', 1), ('T/L', 1000), ('kT/L', 1000), ('MT/L', 1000), ('GT/L', 1000), ('TT/L', 1000)))}
-
-def sign(x:float):
-    ''' Function that returns the sign of x.'''
-    return (x > 0) - (x < 0)
-
-def txt_unit(Value:float, Error:float=None, Unit:str=None, Quantity:str=None, Separator:float='', Figures_Main:int=3, Figures_Error:int=2):
-    ''' Function to format a value, error and unit. '''
-    if Quantity is None:
-        if Error is None:
-            cut_point = math.floor(math.log10(Value)) +1 -Figures_Main
-            valuepack = ('{:.'+str(max(0,-cut_point))+'f}').format(Value)
-        else:
-            valuepack = txt_err(Value, Error=Error)
-        if Unit is None:
-            unitpack = ''
-        else:
-            unitpack = Unit
-    elif not Quantity is None:
-        if not Quantity in QUANTITIES:
-            raise ValueError(f'{Quantity} is not a valid quantity. Options are:\n'+', '.join(q for q in QUANTITIES))
-        if QUANTITIES[Quantity][1]:
-            if not Unit is None:
-                if not QUANTITIES[Quantity][0] in Unit:
-                    raise ValueError(f'Unit {Unit} does not match the quantity {QUANTITIES}')
-                prefix = Unit.split(QUANTITIES[Quantity][0])[0]
-                if not prefix in PREFIXES:
-                    raise ValueError(f'{prefix} is not a valid prefix')
-                prefix = PREFIXES.index(prefix)
-                Value = Value * pow(10, -30+prefix*3)
-            options = []
-            for i in range(len(PREFIXES)):
-                test = Value / pow(10, -30+i*3)
-                if not Error is None:
-                    test_error = Error / pow(10, -30+i*3)
-                    options.append((i, txt_err(test, Error=test_error, Figures=Figures_Error)))
-                else:
-                    cut_point = math.floor(math.log10(test)) +1 -Figures_Main
-                    options.append((i, ('{:.'+str(max(0,-cut_point))+'f}').format(test)))
-            best = tuple(x for x in options if len(x[1].replace('.','')) == min(len(x[1].replace('.','')) for x in options))[-1]
-            valuepack = best[1]
-            unitpack = PREFIXES[best[0]]+QUANTITIES[Quantity][0]
-        else:
-            ref_i = UNITS_SPECIAL[Quantity][1].index((UNITS_SPECIAL[Quantity][0], 1))
-            options = []
-            for i in range(len(UNITS_SPECIAL[Quantity][1])):
-                test = Value
-                test_error = Error
-                if not i == ref_i:
-                    for j in [x for x in range(ref_i, i+sign(i-ref_i), sign(i-ref_i))][1:]:
-                        test = test / UNITS_SPECIAL[Quantity][1][j][1]
-                        if not Error is None:
-                            test_error = test_error / UNITS_SPECIAL[Quantity][1][j][1]
-                if not Error is None:
-                    options.append((i, txt_err(test, Error=test_error, Figures=Figures_Error)))
-                else:
-                    cut_point = math.floor(math.log10(test)) +1 -Figures_Main
-                    options.append((i, ('{:.'+str(max(0,-cut_point))+'f}').format(test)))
-            best = tuple(x for x in options if len(x[1].replace('.','')) == min(len(x[1].replace('.','')) for x in options))[-1]
-            valuepack = best[1]
-            unitpack = UNITS_SPECIAL[Quantity][1][best[0]][0]
-    return valuepack + Separator + unitpack
-
-# ====================================================================================================
-
-def chi_squared_test(F, Xdata, Ydata, Sigma, Par):
+def chi_squared_test(func, x_data, y_data, sigma, pars):
     ''' Function to calculate the chi square and reduced chi square from the outputs of a curve fit.\n 
         Returns the chi^2; nu; chi^2/nu.\n
         Chi^2/nu >> 1 inidcates a poor model.\n
@@ -274,16 +166,49 @@ def chi_squared_test(F, Xdata, Ydata, Sigma, Par):
         Chi^2/nu ~ 1 indicates a good fit.\n
         Chi^2/nu < 1 indicates an overfit or an error overestimation.\n
         Implementation source: https://en.wikipedia.org/wiki/Reduced_chi-squared_statistic. '''
-    f_data = [F(x, *Par) for x in Xdata]
-    chi_squared = sum([pow((Ydata[i]-f_data[i])/Sigma[i], 2) for i, _ in enumerate(Ydata)])
-    nu = len(Xdata) - len(Par)
+    f_data = [func(x, *pars) for x in x_data]
+    chi_squared = sum([pow((y_data[i]-f_data[i])/sigma[i], 2) for i, _ in enumerate(y_data)])
+    nu = len(x_data) - len(pars)
     return chi_squared, nu, chi_squared/nu
+
+# ====================================================================================================
+
+def dump_c(object, file)->None:
+    ''' Compresses the json serializable object into the file.\n
+        File must be opened as \"wb\".'''
+    object_comp = dumps_c(object)
+    file.write(object_comp)
+    return None
+
+def load_c(file)->None:
+    ''' Decompresses the json serializable object from the file.\n
+        File must be opened as \"rb\". '''
+    object_comp = file.read()
+    object = loads_c(object_comp)
+    return object
+
+def dumps_c(object)->None:
+    ''' Compresses the json serializable object into a bytes. '''
+    object_json = json.dumps(object)
+    object_bytes = bytes(object_json, 'utf-8')
+    compressor = zlib.compressobj(level=9, memLevel=9)
+    object_comp = compressor.compress(object_bytes)
+    object_comp += compressor.flush()
+    return object_comp
+
+def loads_c(object_comp:bytes):
+    ''' Decompresses the json serializable object from a bytes. '''
+    decompressor = zlib.decompressobj()
+    object_bytes = decompressor.decompress(object_comp)
+    object_bytes += decompressor.flush()
+    object = json.loads(str(object_bytes, 'utf-8'))
+    return object
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # ====================================================================================================
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 if __name__ == '__main__':
-    print(txt_c('SCU version:', C='Blue'), SCU_VERSION_FULL)
-    print(txt_c('Sys platform:', C='Blue'), sys.platform)
-    print(txt_c('Sys recursion limit:', C='Blue'), sys.getrecursionlimit())
+    print(txt_c('SCU version:', color='Blue'), SCU_VERSION_FULL)
+    print(txt_c('Sys platform:', color='Blue'), sys.platform)
+    print(txt_c('Sys recursion limit:', color='Blue'), sys.getrecursionlimit())
